@@ -1,0 +1,8 @@
+Boundary Setter:
+  ✔ Display single frame from video @done(24-05-13 18:45)
+  ☐ Allow user to choose boundary rectangle
+  ☐ Allow user to choose line threshold which car should cross
+  ☐ Return all this data to be passed to counter
+
+Car Counter:
+  
