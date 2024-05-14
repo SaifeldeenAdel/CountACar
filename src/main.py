@@ -4,7 +4,7 @@ from BoundarySetter import BoundarySetter
 from CarCounter import CarCounter
 
 def main():
-  path = "../video/carss.MOV"
+  path = "../video/cars.MOV"
 
   # Run boundary setting
   boundary, carThreshold = BoundarySetter(path) 
