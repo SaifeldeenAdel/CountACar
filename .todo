@@ -1,7 +1,7 @@
 Boundary Setter:
   ✔ Display single frame from video @done(24-05-13 18:45)
   ✔ Allow user to choose boundary rectangle @done(24-05-14 08:47)
-  ☐ Allow user to choose line threshold which car should cross
+  ✔ Allow user to choose line threshold which car should cross @done(24-05-16 18:02)
   ☐ Figure out less computational way to update frame
   ☐ Organise data to be passed to counter
 
