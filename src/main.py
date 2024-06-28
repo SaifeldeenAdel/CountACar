@@ -3,7 +3,7 @@ import cv2
 from BoundarySetter import BoundarySetter
 from CarCounter import CarCounter
 
-path = "../video/cars2.MOV"
+path = "../video/carStocks.mp4"
 
 def main():
 
@@ -12,40 +12,50 @@ def main():
 
   cap = cv2.VideoCapture(path)
 
-  # Run boundary setting
+  ## BOUNDARY SETTING
   img = None
   boundarySetter = BoundarySetter()
-  
+
   while not boundarySetter.isAllSet():
-      _, frame = cap.read()
-      frame = cv2.resize(frame, (frame.shape[1]//2, frame.shape[0]//2))
+      ret, frame = cap.read()
+      if not ret:
+        continue
+
+      frame = cv2.resize(frame, (frame.shape[1]//4, frame.shape[0]//4))
       img = boundarySetter.update(frame)
 
       cv2.imshow("CarCount", img)
       if cv2.waitKey(10) == 27:
         break
 
+  boundary = boundarySetter.getBoundary()
+  carThreshold = boundarySetter.getThreshold()
 
+  carCounter = CarCounter(boundary, carThreshold)
+  frmcount = 0
+
+  ## DETECTION AND COUNTING
   while True:
-      _, frame = cap.read()
-      frame = cv2.resize(frame, (frame.shape[1]//2, frame.shape[0]//2))
-      boundary = boundarySetter.getBoundary()
-      carThreshold = boundarySetter.getThreshold()
+    _, frame = cap.read()
+    frame = cv2.resize(frame, (frame.shape[1]//4, frame.shape[0]//4))
 
-      # frame = frame[p1[1]:p2[1],p1[0]:p2[0]]
-      # img = CarCounter.update(frame, boundary, threshold)
+    if frmcount % 2 == 0:
+      img = carCounter.update(frame)
+    frmcount += 1
 
-      cv2.imshow("CarCount", img)
-      if cv2.waitKey(10) == 27:
-        break
+    cv2.imshow("CarCount", img)
+    key = cv2.waitKey(1) 
+
+    if key == 32:
+      continue
+    if key == 27:
+      break
+    
   
   cv2.destroyAllWindows()
   
-  
   carThreshold = boundarySetter.getThreshold()
   
-  
-  ## Run detection
 
 
 if __name__ == "__main__":

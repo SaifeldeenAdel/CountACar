@@ -47,9 +47,9 @@ class BoundarySetter:
       if self.p1 and not self.boundary:
         self.p2 = (x,y)
       elif self.boundary and not self.isCarThresholdSet:
-        if x > self.p2[0]:
-          x = self.p2[0]
-        elif x < self.p1[0]:
-          x = self.p1[0]
+        if y > self.p2[1]:
+          y = self.p2[1]
+        elif y < self.p1[1]:
+          y = self.p1[1]
 
-        self.carThreshold = ((x, self.p1[1]), (x,self.p2[1]))
+        self.carThreshold = ((self.p1[0], y), (self.p2[0], y))
