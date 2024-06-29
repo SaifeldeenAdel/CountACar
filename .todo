@@ -1,9 +1,14 @@
 Boundary Setter:
-  ✔ Display single frame from video @done(24-05-13 18:45)
-  ✔ Allow user to choose boundary rectangle @done(24-05-14 08:47)
-  ✔ Allow user to choose line threshold which car should cross @done(24-05-16 18:02)
-  ☐ Figure out less computational way to update frame
-  ☐ Organise data to be passed to counter
+  ✔ Allow user to choose boundary rectangle 
+  ✔ Allow user to choose line threshold which car should cross
+  ✔ Figure out less computational way to update frame 
+  ✔ Return boundary and threshold 
+  ✔ Display single frame from video instead of playing video 
 
 Car Counter:
+  ✔ Choose an object detection model for detecting cars
+  ✔ Only detect within boundary set by user
+  ✔ Assign objects unique ids and track them using IOU
+  ✔ Create new IDs when new cars get into frame
+  ✔ Remove IDs when new cars come in 
   
