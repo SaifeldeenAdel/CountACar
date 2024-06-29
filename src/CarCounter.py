@@ -32,13 +32,10 @@ class Detector:
 
     keep = torchvision.ops.nms(filtered_boxes, filtered_scores, 0.6)
     
-    return filtered_boxes[keep].numpy().astype(np.int32)
+    return filtered_boxes[keep].numpy().astype(np.int32).tolist()
 
 class Tracker:
   def __init__(self, boundary, threshold):
-    self.prevMidPoints = []
-    self.currMidPoints = []
-
     self.prevBoxes = []
     self.currBoxes = []
     self.threshold = threshold
@@ -48,22 +45,16 @@ class Tracker:
     self.trackingObjects = {}
 
   def setBoxes(self, boxes):
-    # self.prevMidPoints = self.currMidPoints.copy()
-    # self.currMidPoints = []
-
+    boxes = [self.adjustToBoundary(box) for box in boxes]
     self.prevBoxes = self.currBoxes.copy()
     self.currBoxes = boxes
-
-    # boundaryX, boundaryY = self.boundary[0]
-    # for box in boxes:
-    #   x1,y1,x2,y2 = box
-    #   cx = (x1+x2) //2
-    #   cy = (y1+y2) //2
-    #   self.currMidPoints.append((cx + boundaryX, cy + boundaryY))
-
-    # for p in self.midPoints:
-    #   cv2.circle(frame, p, 2, (randint(0,255), randint(0,255), randint(0,255)), -1)
     
+  def adjustToBoundary(self,box):
+    boundaryX, boundaryY = self.boundary[0]
+    box = (box[0] + boundaryX, box[1] + boundaryY, box[2] + boundaryX, box[3] + boundaryY)
+    return box
+
+
   
   def calculate_iou(self, box1, box2):
     x1_max = max(box1[0], box2[0])
@@ -88,29 +79,37 @@ class Tracker:
     if self.initializedIDs == 2:
       for curr in self.currBoxes:
         for prev in self.prevBoxes:
-          if self.calculate_iou(curr,prev) > 0.6:
+          iou = self.calculate_iou(curr,prev)
+          if iou > 0.3:
             self.trackingObjects[self.trackID] = curr
             self.trackID += 1
+      
     else:
 
       for id, box in self.trackingObjects.copy().items():
         exists = False
-        for curr in self.currBoxes:
-          if self.calculate_iou(curr,box) > 0.6:
+        for curr in self.currBoxes.copy():
+          iou = self.calculate_iou(curr,box)
+          print(iou)
+          if iou > 0.3:
             self.trackingObjects[id] = curr
+            if curr in self.currBoxes:
+              self.currBoxes.remove(curr)
             exists = True
             continue
+        
         if not exists:
           self.trackingObjects.pop(id)
-
+      
+      for box in self.currBoxes:
+        self.trackingObjects[self.trackID] = box
+        self.trackID += 1
 
     return self.trackingObjects
     
   def visualize(self, frame, trackingObjects):
-    boundaryX, boundaryY = self.boundary[0]
 
     for id, box in trackingObjects.items():
-        box = (box[0] + boundaryX, box[1] + boundaryY, box[2] + boundaryX, box[3] + boundaryY)
         midpoint = ((box[0] + box[2]) // 2, (box[1] + box[3]) // 2)
         cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), (255, 0, 0), 2)
         cv2.circle(frame, midpoint, 3, (0, 255, 255), -1)
@@ -128,6 +127,9 @@ class CarCounter:
 
     self.detector = Detector()
     self.tracker = Tracker(self.boundary, self.threshold)
+
+    self.prevMidPoints = {}
+    self.currMidPoints = {}
     
 
   def drawBoundaryAndThreshold(self, frame):
@@ -143,10 +145,40 @@ class CarCounter:
     vehiclesBB = self.detector.detectBoxes(roi)
     trackingObjects = self.tracker.track(vehiclesBB)
     frame = self.tracker.visualize(frame, trackingObjects)
-    # frame, unique_ids= self.tracker.track(frame, vehiclesBB)
+    self.updateCount(trackingObjects)
+    frame = self.writeCount(frame)
 
-    return frame
+
+    return self.writeCount(frame)
 
 
-  def writeCount(self):
-    pass
+  def setMidPoints(self, trackingObjects):
+    self.prevMidPoints = self.currMidPoints.copy()
+    self.currMidPoints = {}
+
+    for id, box in trackingObjects.items():
+        midpoint = ((box[0] + box[2]) // 2, (box[1] + box[3]) // 2)
+        self.currMidPoints[id] = midpoint
+
+  def writeCount(self, frame):
+    frame = cv2.rectangle(frame, (37, 216), (230, 260), (250,0,255), -1)
+    text = f"Car Count: {self.count}"
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.8
+    color = (255, 255, 255)
+    thickness = 2
+    text_x = 45
+    text_y = 250
+    return cv2.putText(frame, text, (text_x, text_y), font, font_scale, color, thickness)
+
+  def updateCount(self, trackingObjects):
+    self.setMidPoints(trackingObjects)
+    
+
+    for id, currMidpoint in self.currMidPoints.items():
+        if id in self.prevMidPoints:
+            prevMidpoint = self.prevMidPoints[id]
+            if (prevMidpoint[1] <= self.threshold[1][1] and currMidpoint[1] > self.threshold[1][1]) or (prevMidpoint[1] >= self.threshold[1][1] and currMidpoint[1] < self.threshold[1][1]):
+                print("here")
+                self.count += 1
+
